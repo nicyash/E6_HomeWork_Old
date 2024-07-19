@@ -1,0 +1,38 @@
+{% extends 'flatpage/default.html' %}
+{% load static %}
+{% block content %}
+
+<link href="{% static 'css/style.css' %}" rel="stylesheet" />
+<br>
+{% if request.user.is_authenticated %}
+    <div class="div_main">
+        <div class="div_profil">
+            {% csrf_token %}
+
+        </div>
+        <div class="div_user_rooms">
+            <div class="div_user"></div>
+            <div class="div_rooms"></div>
+        </div>
+        <div class="div_chat"></div>
+    </div>
+    <div class="rightdiv">
+
+    </div>
+    <h4></h4>
+    <script>
+        window.userID = {{request.user.id}};
+    </script>
+    <script src="{% static 'js/jsChat.js' %}"></script>
+
+{% else %}
+<form action="/accounts/login/">
+    <input type="submit" value="Авторизоваться" />
+</form>
+<br>
+<form action="/accounts/signup/">
+    <input type="submit" value="Регистрация" />
+</form>
+{% endif %}
+
+{% endblock %}

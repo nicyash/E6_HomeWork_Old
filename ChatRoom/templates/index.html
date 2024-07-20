@@ -1,25 +1,30 @@
 {% extends 'flatpage/default.html' %}
 {% load static %}
 {% block content %}
-
 <link href="{% static 'css/style.css' %}" rel="stylesheet" />
 <br>
 {% if request.user.is_authenticated %}
+<table>
+    <tr><td>
     <div class="div_main">
-        <div class="div_profil">
-            {% csrf_token %}
-
-        </div>
-        <div class="div_user_rooms">
-            <div class="div_user"></div>
-            <div class="div_rooms"></div>
-        </div>
+        <div class="div_profil"></div>
+    </div>
+    </td>
+    <td>
+    <div class="rightdiv">
         <div class="div_chat"></div>
     </div>
-    <div class="rightdiv">
-
+    </td>
+    <td>
+    <div class="div_main">
+        <div class="div_rooms"></div>
     </div>
-    <h4></h4>
+    <div class="div_main">
+        <div class="div_users"></div>
+    </div>
+    </td>
+    </tr>
+</table>
     <script>
         window.userID = {{request.user.id}};
     </script>

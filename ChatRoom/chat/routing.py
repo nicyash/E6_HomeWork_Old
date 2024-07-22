@@ -1,10 +1,10 @@
 from django.urls import re_path
-from .consumers import WSConsumer #, WSChat
+from .consumers import WSConsumer, WSChat
 
 
 ws_urlpatterns = [
     re_path(r'ws/command/', WSConsumer.as_asgi()),
-    #re_path(r'ws/chat/', WSChat.as_asgi()),
+    re_path(r'ws/chat/', WSChat.as_asgi()),
 ]
 
 channel_routing = {

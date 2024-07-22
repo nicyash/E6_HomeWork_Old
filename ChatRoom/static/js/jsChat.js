@@ -24,10 +24,11 @@ const csrftoken = getCookie('csrftoken');
 
 
 // формируем случайный номер для WS для возможности одновременного открытия на разных вкладках
-let sockNum =  Math.floor(Math.random() * 100 + 1);
+let sockNum =  'sn' + Math.floor(Math.random() * 100 + 1);
 
 
 const socket = new WebSocket('ws://localhost:8000/ws/command/' + sockNum); // командный канал
+const socketForChat = new WebSocket('ws://localhost:8000/ws/chat/' + sockNum); //для сообщений
 socket.onclose = async (event) => {
     console.error(event);
     window.alert('запустите сервер и обновите страницу!');
@@ -37,7 +38,6 @@ socket.onopen = () => load_userCard();
 function load_userCard() {
     viewProfil(userId);
     viewRooms();
-    viewUsers();
 };
 
 socket.onmessage = function(event) {
@@ -98,8 +98,10 @@ function showProfil(item) {
  function showUsers(item) {
     let listUser = '';
     for (let key in item) {
-        const newStringOnUser = `<tr><td><img class="img_avatar" width="22" height="22" src="${item[key].avatar}"><b><button style="width: 200px;" class="btn" onclick="jampInUser(${item[key].user})">${item[key].first_name}</button></b></td></tr>`;
-        listUser = listUser + newStringOnUser;
+        if (item[key].user != userId) {
+            const newStringOnUser = `<tr><td><img class="img_avatar" width="22" height="22" src="${item[key].avatar}"><b><button style="width: 200px;" class="btn" onclick="jampInUser('${item[key].first_name}')">${item[key].first_name}</button></b></td></tr>`;
+            listUser = listUser + newStringOnUser;
+            };
     };
     listUser = '<table>' + listUser + '</table><br>'
     divUsers.innerHTML = listUser;
@@ -179,19 +181,24 @@ function changeRoom(item) {
 };
 //переход вчат комнату
 function jampInRoom(item) {
+    viewUsers();
+    delete item.RoomList;
     console.log("перешел на комноту", item)
     // Запрашиваем список сообщений комнаты в !!! командном канале
     socket.send(JSON.stringify({'load': 'messageList', 'room_id': item}));
     currentRoomId = item;
     console.log({'load': 'messageList', 'room_id': item});
     console.log(currentRoomId);
-     // Запрашиваем на сервере подключение к выбранной комнате и отключение от прежней (если была)
-//    chatSocket.send(JSON.stringify({'usersendcommandroom': 'roomselect', 'newroom_id': id, 'oldroom_id': currentRoom}));
-//    currentRoom = id; // после отключения обновляем id (для следующего переподключения)
+     // Запрос на сервер на подключение к чту и отключение от предыдущей
+    socketForChat.send(JSON.stringify({'usersendcommandroom': 'roomselect', 'newroom_id': item, 'oldroom_id': currentRoomId}));
+    currentRoomId = item; // обновляем ID текущей комнаты
 };
 // переход в чат с пользователем
 function jampInUser(item) {
-    console.log("перешел в час с пользователем ID ", item)
+    let inputMessage = document.querySelector('.message_box');
+    inputMessage.value += (item + ", ");
+
+    console.log("Обращаюсь к пользователю с ID ", item)
 };
 
 // выводим чат в браузер
@@ -214,16 +221,17 @@ function showChat(item) {
     document.querySelector('.btn_message').addEventListener('click', () => {
         let message = document.getElementById("input_message");
         if (message.value !== "") {
-            socket.send(JSON.stringify({'usersendcommandroom': 'message', 'room_id': currentRoomId, 'userid': userId, 'message': message.value}));
+            socketForChat.send(JSON.stringify({'usersendcommandroom': 'message', 'room_id': currentRoomId, 'userid': userId, 'message': message.value}));
             console.log({'usersendcommandroom': 'message', 'room_id': currentRoomId, 'user': userId, 'message': message.value});
             message.value = "";
         };
     });
-//
-//    // слушаем сокет и принимаем входящие сообщения от подключенной комнаты
-//    chatSocket.onmessage = function(event) {
-//        let data = JSON.parse(event.data);
-//        console.log(data);
-//        textarea.value += `${data['name']}: ${data['message']}\n`;
-//    };
+
+    // слушаем сокет и принимаем входящие сообщения от подключенной комнаты
+    socketForChat.onmessage = function(event) {
+        console.log(event.data);
+        let data = JSON.parse(event.data);
+        console.log(data);
+        textarea.value += `${data['name']}: ${data['message']}\n`;
+    };
 };
